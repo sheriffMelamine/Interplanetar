@@ -1,0 +1,19 @@
+controller_list:
+  - name: arm_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - ArmBase__BaseShaft
+      - BaseShaft__Shoulder
+      - Shoulder__Elbow
+      - Elbow__Yaw
+      - Yaw__Pitch
+      - Pitch__Roll
+  - name: gripper_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: True
+    joints:
+      - Joint_LeftClaw
+      - Joint_RightClaw

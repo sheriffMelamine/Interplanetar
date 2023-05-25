@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: prochesta_arm
+    relative_path: urdf/prochesta_arm.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/prochesta_arm.srdf
+  CONFIG:
+    author_name: TanvirTaaha
+    author_email: tanvir.taaha@gmail.com
+    generated_timestamp: 1681979969
