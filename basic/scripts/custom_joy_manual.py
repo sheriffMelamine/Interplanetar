@@ -1,68 +1,84 @@
 #!/usr/bin/env python
 
 import rospy
-import moveit_commander
-import sys
 
-from std_msgs.msg import Empty
 from std_msgs.msg import String
-from geometry_msgs.msg import PoseStamped as Poses
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 
 myjoy = {
-    "MAC": "CC:15:79:90:63:25",
+    "MAC": rospy.get_param("/myjoy/device/MAC"),
 
-    "LX": 0,
-    "LY": 1,
-    "RX": 2,
-    "RY": 3,
-    "LT": 5,
-    "RT": 4,
-    "NS": 7,
-    "EW": 6,
+    "LX": rospy.get_param("/myjoy/axis/LX"),
+    "LY": rospy.get_param("/myjoy/axis/LY"),
+    "RX": rospy.get_param("/myjoy/axis/RX"),
+    "RY": rospy.get_param("/myjoy/axis/RY"),
+    "LT": rospy.get_param("/myjoy/axis/LT"),
+    "RT": rospy.get_param("/myjoy/axis/RT"),
+    "NS": rospy.get_param("/myjoy/axis/NS"),
+    "EW": rospy.get_param("/myjoy/axis/EW"),
     
-    "X": 3,
-    "Y": 4,
-    "A": 0,
-    "B": 1,
-    "START": 11,
-    "SELECT": 10,
-    "LB": 6,
-    "RB": 7,
-    "LP": 13,
-    "RP": 14
+    "X": rospy.get_param("/myjoy/button/X"),
+    "Y": rospy.get_param("/myjoy/button/Y"),
+    "A": rospy.get_param("/myjoy/button/A"),
+    "B": rospy.get_param("/myjoy/button/B"),
+    "START": rospy.get_param("/myjoy/button/START"),
+    "SELECT": rospy.get_param("/myjoy/button/SELECT"),
+    "LB": rospy.get_param("/myjoy/button/LB"),
+    "RB": rospy.get_param("/myjoy/button/RB"),
+    "LP": rospy.get_param("/myjoy/button/LP"),
+    "RP": rospy.get_param("/myjoy/button/RP"),
 }
 
+
+
 ylim = [10,175]
-plim = [5,130]
+plim = [5,230]
 
 msg1 = Twist()
 
-flags = [False,False,False,False,False,False,False]
-flagx = [False,False,False]
+btns = ["B","X","A","Y","RB","START"]
+cmds_1 = ["R1","R2","G1","G2","X1","Z0"]
+cmds_0 = ["R0","R0","G0","G0","X0","Z0"]
+cmdx_r = ["B500","S500","E500"]
+cmdx_l = ["B600","S600","E600"]
+cmdx_0 = ["B700","S700","E700"]
+
+flag_l = False
+flag_a = False
+flags = [False]*len(btns)
+flagx = [False]*len(cmdx_0)
 flagp = False
 flagy = False
 
-oldact = [0,0,0]
-old = [0,0,0,0,0,0,0]
-
-btns = ["X","Y","A","B","RB"]
-cmds_1 = ["R1","R2","G1","G2","X1"]
-cmds_0 = ["R0","R0","G0","G0","X0"]
-cmdx_r = ["B500","E500","S500"]
-cmdx_l = ["B600","E600","S600"]
-cmdx_0 = ["B700","E700","S700"]
+oldact = [0]*len(cmdx_0)
+old = [0]*len(btns)
 
 oldy = (ylim[0]+ylim[1])//2
 oldp = (plim[0]+plim[1])//2
 
 def callback(data):
-    global msg1,flags,old,btns,oldact,flagx,oldy,oldp,ylim,plim,flagy,flagp
+    global msg1,flags,old,btns,oldact,flagx,oldy,oldp,ylim,plim,flagy,flagp, flag_l, flag_a
+    turbo = data.buttons[myjoy["SELECT"]]
+    brek = data.buttons[myjoy["LB"]]
     
-    msg1.linear.x = data.axes[myjoy["LY"]]
-    msg1.angular.z = data.axes[myjoy["LX"]]
+    if msg1.linear.x == (1.-0.3*turbo)*data.axes[myjoy["LY"]]:
+        flag_l = False
+    else:
+        flag_l = True
+        msg1.linear.x = (1.-0.3*turbo)*data.axes[myjoy["LY"]]
+        
+    if msg1.angular.z == -(1.-0.3*turbo)*data.axes[myjoy["LX"]]:
+        flag_a = False
+    else:
+        flag_a = True
+        msg1.angular.z = -(1.-0.3*turbo)*data.axes[myjoy["LX"]]
     
+    if brek:    
+        msg1.linear.z = -1.
+    else:
+        msg1.linear.z = 0.
+        
     for i in range(len(btns)):
         if data.buttons[myjoy[btns[i]]]==old[i]:
             flags[i]=False
@@ -70,13 +86,13 @@ def callback(data):
             flags[i]=True
             old[i]=data.buttons[myjoy[btns[i]]]
             
-    if data.axes[myjoy["RX"]]>0.:
+    if data.axes[myjoy["RX"]]>0.2:
         if oldact[0]==1:
             flagx[0]=False
         else:
             flagx[0]=True
             oldact[0]=1  
-    elif data.axes[myjoy["RX"]]<0.:
+    elif data.axes[myjoy["RX"]]<-0.2:
         if oldact[0]==-1:
             flagx[0]=False
         else:
@@ -89,13 +105,13 @@ def callback(data):
             flagx[0]=True
             oldact[0]=0
             
-    if data.axes[myjoy["RY"]]>0.:
+    if data.axes[myjoy["RY"]]<-0.2:
         if oldact[1]==1:
             flagx[1]=False
         else:
             flagx[1]=True
             oldact[1]=1  
-    elif data.axes[myjoy["RY"]]<0.:
+    elif data.axes[myjoy["RY"]]>0.2:
         if oldact[1]==-1:
             flagx[1]=False
         else:
@@ -108,13 +124,13 @@ def callback(data):
             flagx[1]=True
             oldact[1]=0
     
-    if data.axes[myjoy["LT"]]-data.axes[myjoy["RT"]]>0.:
+    if data.axes[myjoy["LT"]]-data.axes[myjoy["RT"]]>0.2:
         if oldact[2]==1:
             flagx[2]=False
         else:
             flagx[2]=True
             oldact[2]=1  
-    elif data.axes[myjoy["LT"]]-data.axes[myjoy["RT"]]<0.:
+    elif data.axes[myjoy["LT"]]-data.axes[myjoy["RT"]]<-0.2:
         if oldact[2]==-1:
             flagx[2]=False
         else:
@@ -127,20 +143,20 @@ def callback(data):
             flagx[2]=True
             oldact[2]=0
     
-    if data.axes[myjoy["NS"]]>0. and oldp+3>plim[0]:
+    if data.axes[myjoy["NS"]]>0. and oldp>plim[0]+3:
         oldp -= 3
         flagp = True
-    elif data.axes[myjoy["NS"]]<0. and oldp-3<plim[1]:
+    elif data.axes[myjoy["NS"]]<0. and oldp<plim[1]-3:
         oldp += 3
         flagp = True
     else:
         flagp = False
     
     
-    if data.axes[myjoy["EW"]]>0. and oldy+3>ylim[0]:
+    if data.axes[myjoy["EW"]]>0. and oldy>ylim[0]+3:
         oldy -= 3
         flagy = True
-    elif data.axes[myjoy["EW"]]<0. and oldy-3<ylim[1]:
+    elif data.axes[myjoy["EW"]]<0. and oldy<ylim[1]-3:
         oldy += 3
         flagy = True
     else:
@@ -149,7 +165,7 @@ def callback(data):
 
 def talker():
     
-    global msg1,flags,old,cmds_0,cmds_1,cmdx_r,cmdx_l,cmdx_0,oldact,flagx,flagy,flagp
+    global msg1,flags,old,cmds_0,cmds_1,cmdx_r,cmdx_l,cmdx_0,oldact,flagx,flagy,flagp,flag_l,flag_a
     
     rospy.init_node('prochesta_joy_pub',anonymous=True)
     pub0 = rospy.Publisher('/cmd_vel',Twist, queue_size=25)
@@ -159,7 +175,10 @@ def talker():
     
     while not rospy.is_shutdown():
         
-        pub0.publish(msg1)
+        if flag_l is True or flag_a is True:
+            pub0.publish(msg1)
+            flag_l = False
+            flag_a = False
         for i in range(len(btns)):
             if flags[i]==True:
                 flags[i]=False

@@ -181,15 +181,15 @@ class InterplaneterUIApp(MDApp):
         except:
             print("Failed to set up main camera subscriber")
         try:
-            rospy.Subscriber('usb_cam_3/image_raw', Image_sub, callback_img_2)
+            rospy.Subscriber('usb_cam_1/image_raw', Image_sub, callback_img_2)
         except:
             print("Failed to set up arm camera subscriber")
         try:
-            rospy.Subscriber('usb_cam_4/image_raw', Image_sub, callback_img_3)
+            rospy.Subscriber('usb_cam_2/image_raw', Image_sub, callback_img_3)
         except:
             print("Failed to set up science camera subscriber")
         try:
-            rospy.Subscriber('usb_cam_5/image_raw', Image_sub, callback_img_4)
+            rospy.Subscriber('video_frames', Image_sub, callback_img_4)
         except:
             print("Failed to set up microscope camera subscriber")
 
@@ -249,7 +249,7 @@ class InterplaneterUIApp(MDApp):
 
         #arm controls---------------------------------------------------------------------------------
 
-        self.base = Slider(min=joint_degree_limits['B'][0], max=joint_degree_limits['B'][1], value=0, step=1, orientation='horizontal', size_hint = (0.15,0.025), pos_hint = {"center_x": 0.71,"center_y": 0.55-.05})
+        self.base = Slider(min=0, max=360, value=0, step=1, orientation='horizontal', size_hint = (0.15,0.025), pos_hint = {"center_x": 0.71,"center_y": 0.55-.05})
         self.base.bind(value=self.move_base)
         layout.add_widget(self.base)
         self.base_val = Label(text='0', pos_hint={'center_x': .795, 'center_y': .55-.05}, size_hint=(0.4,0.4),font_size = 20)
@@ -270,7 +270,7 @@ class InterplaneterUIApp(MDApp):
         self.base_right_button.bind(on_release=self.base_stop)
         layout.add_widget(self.base_right_button)
 
-        self.shoulder = Slider(min=joint_degree_limits['S'][0], max=joint_degree_limits['S'][1], value=0, step=1, orientation='horizontal', size_hint = (0.15,0.025), pos_hint = {"center_x": 0.71,"center_y": 0.6-.05})
+        self.shoulder = Slider(min=0, max=180, value=0, step=1, orientation='horizontal', size_hint = (0.15,0.025), pos_hint = {"center_x": 0.71,"center_y": 0.6-.05})
         self.shoulder.bind(value=self.move_shoulder)
         layout.add_widget(self.shoulder)
         self.shoulder_val = Label(text='0', pos_hint={'center_x': .795, 'center_y': .6-.05}, size_hint=(0.4,0.4),font_size = 20)
@@ -291,7 +291,7 @@ class InterplaneterUIApp(MDApp):
         self.shoulder_right_button.bind(on_release=self.shoulder_stop)
         layout.add_widget(self.shoulder_right_button)
 
-        self.elbow = Slider(min=joint_degree_limits['E'][0], max=joint_degree_limits['E'][1], value=0, step=1, orientation='horizontal', size_hint = (0.15,0.025), pos_hint = {"center_x": 0.71,"center_y": 0.65-.05})
+        self.elbow = Slider(min=0, max=180, value=0, step=1, orientation='horizontal', size_hint = (0.15,0.025), pos_hint = {"center_x": 0.71,"center_y": 0.65-.05})
         self.elbow.bind(value=self.move_elbow)
         layout.add_widget(self.elbow)
         self.elbow_val = Label(text='0', pos_hint={'center_x': .795, 'center_y': .65-.05}, size_hint=(0.4,0.4),font_size = 20)
@@ -533,18 +533,12 @@ class InterplaneterUIApp(MDApp):
     #arm control functions---------------------------------------------------------------------------------
 
     def move_base(self, instance, value):
+        self.command = 'B' + str(int(value))
         self.base_val.text = str(value)
-        # arm_pub.publish(self.command) # will be sent at base_set()
+        arm_pub.publish(self.command)
     def base_set(self, *args):
-        deg = int(self.base_val.text.split('.')[0])
-        encdr = map(deg, 
-            joint_degree_limits['B'][0], joint_degree_limits['B'][1], 
-            joint_encoder_limit['B'][0], joint_encoder_limit['B'][1])
-        self.command = 'B' +  str(int(encdr)) # cut-off decimal point 
-        # arm_pub.publish(self.command) # send this to controller instead
-        print(self.command)
-        controller_pub.publish(self.command)
-        # self.command = 'B400' # apparantly no need for this right now
+        self.command = 'B400'
+        arm_pub.publish(self.command)
     def base_left(self, *args):
         self.command = 'B500'
         arm_pub.publish(self.command)
@@ -556,19 +550,12 @@ class InterplaneterUIApp(MDApp):
         arm_pub.publish(self.command)
 
     def move_shoulder(self, instance, value):
-        # self.command = 'S' + str(int(value))
+        self.command = 'S' + str(int(value))
         self.shoulder_val.text = str(value)
-        # arm_pub.publish(self.command) # will be sent at shoulder_set()
+        arm_pub.publish(self.command)
     def shoulder_set(self, *args):
-        # self.command = 'S400' # apparantly no need for this right now
-        deg = int(self.shoulder_val.text.split('.')[0])
-        encdr = map(deg, 
-            joint_degree_limits['S'][0], joint_degree_limits['S'][1], 
-            joint_encoder_limit['S'][0], joint_encoder_limit['S'][1])
-        self.command = 'S' +  str(int(encdr)) # cut-off decimal point 
-        # arm_pub.publish(self.command) # send this to controller instead
-        print(self.command)
-        controller_pub.publish(self.command)
+        self.command = 'S400'
+        arm_pub.publish(self.command)
     def shoulder_left(self, *args):
         self.command = 'S500'
         arm_pub.publish(self.command)
@@ -580,19 +567,12 @@ class InterplaneterUIApp(MDApp):
         arm_pub.publish(self.command)
 
     def move_elbow(self, instance, value):
-        # self.command = 'E' + str(int(value))
+        self.command = 'E' + str(int(value))
         self.elbow_val.text = str(value)
-        # arm_pub.publish(self.command) # will be sent at elbow_set()
+        arm_pub.publish(self.command)
     def elbow_set(self, *args):
-        # self.command = 'E400' # apparantly no need for this right now
-        # arm_pub.publish(self.command) # send this to controller instead
-        deg = int(self.elbow_val.text.split('.')[0])
-        encdr = map(deg, 
-            joint_degree_limits['E'][0], joint_degree_limits['E'][1], 
-            joint_encoder_limit['E'][0], joint_encoder_limit['E'][1])
-        self.command = 'E' + str(int(encdr)) # cut-off decimal point 
-        print(self.command)
-        controller_pub.publish(self.command)
+        self.command = 'E400'
+        arm_pub.publish(self.command)
     def elbow_left(self, *args):
         self.command = 'E500'
         arm_pub.publish(self.command)
@@ -725,13 +705,13 @@ class InterplaneterUIApp(MDApp):
         global feed_num 
         feed_num = int(value)
         if(feed_num == 1):
-            self.cam_feed_slider_val.text = "Realsense Camera"
+            self.cam_feed_slider_val.text = "Jetson"
         if(feed_num == 2):
-            self.cam_feed_slider_val.text = "Camera 1"
+            self.cam_feed_slider_val.text = "Arm"
         if(feed_num == 3):
-            self.cam_feed_slider_val.text = "Camera 2"
+            self.cam_feed_slider_val.text = "Science"
         if(feed_num == 4):
-            self.cam_feed_slider_val.text = "Camera 3"
+            self.cam_feed_slider_val.text = "Microscope"
 
     #other control functions---------------------------------------------------------------------------------
 
@@ -776,54 +756,15 @@ class InterplaneterUIApp(MDApp):
         except:
             pass
         try:
-            try:
-                deg = map(int(encoder_pos[1]), 
-                    joint_encoder_limit['B'][0], joint_encoder_limit['B'][1],
-                    joint_degree_limits['B'][0], joint_degree_limits['B'][1])
-                deg = int(deg)
-                self.base_targ.text = str(deg)
-                if deg not in range(joint_degree_limits['B'][0], joint_degree_limits['B'][1]+1):
-                    self.base_targ.color = (1, .5, .5, 1) # red
-                    self.base_set_button.disabled = True
-                else:
-                    self.base_targ.color = (1, 1, 1, 1) # white
-                    self.base_set_button.disabled = False
-            except:
-                self.base_targ.text = encoder_pos[1]
+            self.base_targ.text = encoder_pos[1]
         except:
             pass
         try:
-            try:
-                deg = map(int(encoder_pos[2]), 
-                    joint_encoder_limit['S'][0], joint_encoder_limit['S'][1],
-                    joint_degree_limits['S'][0], joint_degree_limits['S'][1])
-                deg = int(deg)
-                self.shoulder_targ.text = str(deg)
-                if deg not in range(joint_degree_limits['S'][0], joint_degree_limits['S'][1]+1):
-                    self.shoulder_targ.color = (1, .5, .5, 1) # red
-                    self.shoulder_set_button.disabled = True
-                else:
-                    self.shoulder_targ.color = (1, 1, 1, 1) # white
-                    self.shoulder_set_button.disabled = False
-            except:
-                self.shoulder_targ.text = encoder_pos[2]
+            self.shoulder_targ.text = encoder_pos[2]
         except:
             pass
         try:
-            try:
-                deg = map(int(encoder_pos[3]), 
-                    joint_encoder_limit['E'][0], joint_encoder_limit['E'][1],
-                    joint_degree_limits['E'][0], joint_degree_limits['E'][1])
-                deg = int(deg)
-                self.elbow_targ.text = str(deg)
-                if deg not in range(joint_degree_limits['E'][0], joint_degree_limits['E'][1]+1):
-                    self.elbow_targ.color = (1, .5, .5, 1) # red
-                    self.elbow_set_button.disabled = True
-                else:
-                    self.elbow_targ.color = (1, 1, 1, 1) # white
-                    self.elbow_set_button.disabled = False
-            except:
-                self.elbow_targ.text = encoder_pos[3]
+            self.elbow_targ.text = encoder_pos[3]
         except:
             pass
         try:
@@ -964,9 +905,6 @@ def callback_stat(data):
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def map(x, in_min, in_max, out_min, out_max):
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
 if __name__ == '__main__':
     rospy.init_node('gui',anonymous=True)
 
@@ -976,19 +914,7 @@ if __name__ == '__main__':
     arm_pub = rospy.Publisher('base_to_rvr_arm', String, queue_size=10) 
     sci_pub = rospy.Publisher('base_to_rvr_sci', String, queue_size=10)
     stat_pub = rospy.Publisher('base_to_rvr_stat', String, queue_size=10)
-
-    controller_pub = rospy.Publisher('base_to_arm_controller', String, queue_size=10)
-
-    joint_degree_limits = {
-        'B' : [-120, 120],
-        'S' : [-57, 0],
-        'E' : [-57, 0]
-    }
-    joint_encoder_limit = {
-        'B' : [5, 245],
-        'S' : [140, 200],
-        'E' : [206, 256]
-    }
+    
 
     InterplaneterUIApp().run()
 

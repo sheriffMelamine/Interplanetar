@@ -72,7 +72,7 @@ void loop() {
     
     mot = 3*(cmd/3);
     flag = cmd%3;
-    analogWrite(motor[mot], 245-55*mot);
+    analogWrite(motor[mot], 250);//245-55*mot);
     digitalWrite(motor[mot+1],flag/2);
     digitalWrite(motor[mot+2],flag%2);
     

@@ -1,40 +1,43 @@
 #!/usr/bin/env python
 
 import rospy
-import moveit_commander
 import sys
+import moveit_commander
 
-from std_msgs.msg import Empty
 from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped as Poses
-from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
+from tf.transformations import euler_from_quaternion as efq
+from tf.transformations import quaternion_from_euler as qfe
+
+
 
 myjoy = {
-    "MAC": "CC:15:79:90:63:25",
+    "MAC": rospy.get_param("/myjoy/device/MAC"),
 
-    "LX": 0,
-    "LY": 1,
-    "RX": 2,
-    "RY": 3,
-    "LT": 5,
-    "RT": 4,
-    "NS": 7,
-    "EW": 6,
+    "LX": rospy.get_param("/myjoy/axis/LX"),
+    "LY": rospy.get_param("/myjoy/axis/LY"),
+    "RX": rospy.get_param("/myjoy/axis/RX"),
+    "RY": rospy.get_param("/myjoy/axis/RY"),
+    "LT": rospy.get_param("/myjoy/axis/LT"),
+    "RT": rospy.get_param("/myjoy/axis/RT"),
+    "NS": rospy.get_param("/myjoy/axis/NS"),
+    "EW": rospy.get_param("/myjoy/axis/EW"),
     
-    "X": 3,
-    "Y": 4,
-    "A": 0,
-    "B": 1,
-    "START": 11,
-    "SELECT": 10,
-    "LB": 6,
-    "RB": 7,
-    "LP": 13,
-    "RP": 14
+    "X": rospy.get_param("/myjoy/button/X"),
+    "Y": rospy.get_param("/myjoy/button/Y"),
+    "A": rospy.get_param("/myjoy/button/A"),
+    "B": rospy.get_param("/myjoy/button/B"),
+    "START": rospy.get_param("/myjoy/button/START"),
+    "SELECT": rospy.get_param("/myjoy/button/SELECT"),
+    "LB": rospy.get_param("/myjoy/button/LB"),
+    "RB": rospy.get_param("/myjoy/button/RB"),
+    "LP": rospy.get_param("/myjoy/button/LP"),
+    "RP": rospy.get_param("/myjoy/button/RP"),
 }
 
 msg2 = Poses()
+msg3 = Poses()
 
 def callback(data):
     
@@ -44,12 +47,15 @@ def callback(data):
     msg2.pose.position.y = data.axes[myjoy["RY"]]*.01
     msg2.pose.position.z = data.axes[myjoy["LT"]]*.005-data.axes[myjoy["RT"]]*.005
     
+    msg3.pose.position.x = data.axes[myjoy["EW"]]*.05
+    msg3.pose.position.y = data.axes[myjoy["NS"]]*.05
+    
     
     
 
 def talker():
     
-    global msg2
+    global msg2,msg3
     i=0
     
     moveit_commander.roscpp_initialize(sys.argv)
@@ -63,9 +69,15 @@ def talker():
         if i==0:
             current_pose = move_group.get_current_pose().pose
         
-        current_pose.position.x += msg2.pose.position.x
+        current_pose.position.x -= msg2.pose.position.x
         current_pose.position.y += msg2.pose.position.y
         current_pose.position.z += msg2.pose.position.z
+        
+        orientation = [current_pose.orientation.x, current_pose.orientation.y, current_pose.orientation.z, current_pose.orientation.w]
+        (r,p,y) = efq(orientation)
+        y += msg3.pose.position.x
+        r += msg3.pose.position.y 
+        (current_pose.orientation.x,current_pose.orientation.y,current_pose.orientation.z,current_pose.orientation.w)=qfe(r,p,y)
         
         i+=1
         
