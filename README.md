@@ -1,4 +1,4 @@
-*This Repository contains the software backend developed by software sub-team of Team Interplanetar during URC2023. This repository is not maintained. For the most recent software backend, Team Interplanetar members should follow the [latest codebase](https://github.com/InterplanetarCodebase).
+*This Repository contains the software backend developed by software sub-team of Team Interplanetar during URC2023. This repository is not maintained. For the most recent software backend, Team Interplanetar members should follow the [latest codebase](https://github.com/InterplanetarCodebase).*
 
 ##  Small description of the directories
 |Directory|Description|
